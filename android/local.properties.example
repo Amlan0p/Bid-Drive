@@ -1,0 +1,4 @@
+# Copy to local.properties (git-ignored). Android Studio creates sdk.dir for you.
+# sdk.dir=/path/to/Android/sdk
+# Optional: backend URL for ALL builds (must end with /api/; https required for release)
+# biddrive.apiBaseUrl=https://your-service.onrender.com/api/

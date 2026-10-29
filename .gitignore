@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.tsbuildinfo
+.gradle/
+build/
+local.properties
+*.jks
+*.keystore

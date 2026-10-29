@@ -1,0 +1,1331 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: BidDrive car auction platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: User management
+  - name: cars
+    description: Car listings
+  - name: auctions
+    description: Auction management
+  - name: bids
+    description: Bidding operations
+  - name: watchlist
+    description: Watchlist / favorites
+  - name: payments
+    description: Payment operations
+  - name: notifications
+    description: Notification management
+  - name: analytics
+    description: Analytics and dashboard data
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── USERS ────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current authenticated user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [dealer, customer, admin]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, banned]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/ban:
+    post:
+      operationId: banUser
+      tags: [users]
+      summary: Ban a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User banned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/unban:
+    post:
+      operationId: unbanUser
+      tags: [users]
+      summary: Unban a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User unbanned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ─── CARS ─────────────────────────────────────────────────────────────────
+  /cars:
+    get:
+      operationId: listCars
+      tags: [cars]
+      summary: List car listings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: fuelType
+          in: query
+          schema:
+            type: string
+        - name: transmission
+          in: query
+          schema:
+            type: string
+        - name: minYear
+          in: query
+          schema:
+            type: integer
+        - name: maxYear
+          in: query
+          schema:
+            type: integer
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated car listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CarListResponse"
+    post:
+      operationId: createCar
+      tags: [cars]
+      summary: Create a new car listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarInput"
+      responses:
+        "201":
+          description: Created car
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
+  /cars/{id}:
+    get:
+      operationId: getCar
+      tags: [cars]
+      summary: Get car by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Car details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCar
+      tags: [cars]
+      summary: Update a car listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarUpdate"
+      responses:
+        "200":
+          description: Updated car
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+    delete:
+      operationId: deleteCar
+      tags: [cars]
+      summary: Delete a car listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /cars/{id}/approve:
+    post:
+      operationId: approveCar
+      tags: [cars]
+      summary: Approve a car listing (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved car
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
+  /cars/{id}/reject:
+    post:
+      operationId: rejectCar
+      tags: [cars]
+      summary: Reject a car listing (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectReason"
+      responses:
+        "200":
+          description: Rejected car
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
+  /cars/my:
+    get:
+      operationId: listMyCars
+      tags: [cars]
+      summary: List current user's car listings
+      responses:
+        "200":
+          description: User's car listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
+
+  # ─── AUCTIONS ─────────────────────────────────────────────────────────────
+  /auctions:
+    get:
+      operationId: listAuctions
+      tags: [auctions]
+      summary: List auctions
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [upcoming, live, ended]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated auction list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionListResponse"
+    post:
+      operationId: createAuction
+      tags: [auctions]
+      summary: Create a new auction (admin/dealer)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuctionInput"
+      responses:
+        "201":
+          description: Created auction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auction"
+
+  /auctions/{id}:
+    get:
+      operationId: getAuction
+      tags: [auctions]
+      summary: Get auction by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Auction details with car and bids
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateAuction
+      tags: [auctions]
+      summary: Update an auction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuctionUpdate"
+      responses:
+        "200":
+          description: Updated auction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auction"
+    delete:
+      operationId: deleteAuction
+      tags: [auctions]
+      summary: Delete an auction (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /auctions/live:
+    get:
+      operationId: listLiveAuctions
+      tags: [auctions]
+      summary: List currently live auctions
+      responses:
+        "200":
+          description: Live auctions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Auction"
+
+  /auctions/upcoming:
+    get:
+      operationId: listUpcomingAuctions
+      tags: [auctions]
+      summary: List upcoming auctions
+      responses:
+        "200":
+          description: Upcoming auctions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Auction"
+
+  # ─── BIDS ─────────────────────────────────────────────────────────────────
+  /auctions/{id}/bids:
+    get:
+      operationId: listAuctionBids
+      tags: [bids]
+      summary: Get bid history for an auction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+    post:
+      operationId: placeBid
+      tags: [bids]
+      summary: Place a bid on an auction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidInput"
+      responses:
+        "201":
+          description: Bid placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+        "400":
+          description: Invalid bid (too low, auction not live, etc.)
+
+  /bids/my:
+    get:
+      operationId: listMyBids
+      tags: [bids]
+      summary: Get current user's bid history
+      responses:
+        "200":
+          description: User's bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+
+  # ─── WATCHLIST ────────────────────────────────────────────────────────────
+  /watchlist:
+    get:
+      operationId: listWatchlist
+      tags: [watchlist]
+      summary: Get current user's watchlist
+      responses:
+        "200":
+          description: Watchlist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+
+  /watchlist/{auctionId}:
+    post:
+      operationId: addToWatchlist
+      tags: [watchlist]
+      summary: Add auction to watchlist
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Added to watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+    delete:
+      operationId: removeFromWatchlist
+      tags: [watchlist]
+      summary: Remove auction from watchlist
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  # ─── PAYMENTS ─────────────────────────────────────────────────────────────
+  /payments/intent:
+    post:
+      operationId: createPaymentIntent
+      tags: [payments]
+      summary: Create a payment intent for a winning bid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentIntentInput"
+      responses:
+        "201":
+          description: Payment intent created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentIntent"
+
+  /payments/my:
+    get:
+      operationId: listMyPayments
+      tags: [payments]
+      summary: Get current user's payment/transaction history
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List all payments (admin only)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, failed, refunded]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated payments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentListResponse"
+
+  # ─── NOTIFICATIONS ────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Get current user's notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked as read
+
+  # ─── ANALYTICS ────────────────────────────────────────────────────────────
+  /analytics/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [analytics]
+      summary: Get admin dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /analytics/auctions:
+    get:
+      operationId: getAuctionAnalytics
+      tags: [analytics]
+      summary: Get auction analytics (status breakdown, bids over time)
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Auction analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionAnalytics"
+
+  /analytics/revenue:
+    get:
+      operationId: getRevenueAnalytics
+      tags: [analytics]
+      summary: Get revenue analytics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Revenue analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueAnalytics"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    # ─── USER SCHEMAS ────────────────────────────────────────────────────────
+    User:
+      type: object
+      required: [id, clerkId, email, name, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        phone:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [dealer, customer, admin]
+        status:
+          type: string
+          enum: [active, banned]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        avatarUrl:
+          type: string
+
+    AdminUserUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [dealer, customer, admin]
+        status:
+          type: string
+          enum: [active, banned]
+
+    UserListResponse:
+      type: object
+      required: [users, total, page, limit]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ─── CAR SCHEMAS ─────────────────────────────────────────────────────────
+    Car:
+      type: object
+      required: [id, sellerId, brand, model, year, fuelType, transmission, mileage, location, status, images, createdAt]
+      properties:
+        id:
+          type: integer
+        sellerId:
+          type: integer
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        fuelType:
+          type: string
+          enum: [petrol, diesel, electric, hybrid, cng]
+        transmission:
+          type: string
+          enum: [manual, automatic, cvt]
+        mileage:
+          type: integer
+        location:
+          type: string
+        color:
+          type: ["string", "null"]
+        registrationNumber:
+          type: ["string", "null"]
+        damageReport:
+          type: ["string", "null"]
+        inspectionReport:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        rejectionReason:
+          type: ["string", "null"]
+        images:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CarInput:
+      type: object
+      required: [brand, model, year, fuelType, transmission, mileage, location]
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        fuelType:
+          type: string
+          enum: [petrol, diesel, electric, hybrid, cng]
+        transmission:
+          type: string
+          enum: [manual, automatic, cvt]
+        mileage:
+          type: integer
+        location:
+          type: string
+        color:
+          type: string
+        registrationNumber:
+          type: string
+        damageReport:
+          type: string
+        inspectionReport:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+
+    CarUpdate:
+      type: object
+      properties:
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        fuelType:
+          type: string
+        transmission:
+          type: string
+        mileage:
+          type: integer
+        location:
+          type: string
+        color:
+          type: string
+        registrationNumber:
+          type: string
+        damageReport:
+          type: string
+        inspectionReport:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+
+    RejectReason:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    CarListResponse:
+      type: object
+      required: [cars, total, page, limit]
+      properties:
+        cars:
+          type: array
+          items:
+            $ref: "#/components/schemas/Car"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ─── AUCTION SCHEMAS ──────────────────────────────────────────────────────
+    Auction:
+      type: object
+      required: [id, carId, sellerId, startingPrice, reservePrice, currentBid, bidCount, status, startTime, endTime, createdAt]
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        sellerId:
+          type: integer
+        car:
+          $ref: "#/components/schemas/Car"
+        startingPrice:
+          type: number
+        reservePrice:
+          type: number
+        currentBid:
+          type: number
+        bidIncrement:
+          type: number
+        bidCount:
+          type: integer
+        status:
+          type: string
+          enum: [upcoming, live, ended]
+        winnerId:
+          type: ["integer", "null"]
+        winningBid:
+          type: ["number", "null"]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AuctionDetail:
+      type: object
+      required: [id, carId, sellerId, startingPrice, reservePrice, currentBid, bidCount, status, startTime, endTime, createdAt, recentBids]
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        sellerId:
+          type: integer
+        car:
+          $ref: "#/components/schemas/Car"
+        startingPrice:
+          type: number
+        reservePrice:
+          type: number
+        currentBid:
+          type: number
+        bidIncrement:
+          type: number
+        bidCount:
+          type: integer
+        status:
+          type: string
+          enum: [upcoming, live, ended]
+        winnerId:
+          type: ["integer", "null"]
+        winningBid:
+          type: ["number", "null"]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        recentBids:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bid"
+
+    AuctionInput:
+      type: object
+      required: [carId, startingPrice, reservePrice, startTime, endTime]
+      properties:
+        carId:
+          type: integer
+        startingPrice:
+          type: number
+        reservePrice:
+          type: number
+        bidIncrement:
+          type: number
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+
+    AuctionUpdate:
+      type: object
+      properties:
+        startingPrice:
+          type: number
+        reservePrice:
+          type: number
+        bidIncrement:
+          type: number
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [upcoming, live, ended]
+
+    AuctionListResponse:
+      type: object
+      required: [auctions, total, page, limit]
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Auction"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ─── BID SCHEMAS ─────────────────────────────────────────────────────────
+    Bid:
+      type: object
+      required: [id, auctionId, bidderId, amount, createdAt]
+      properties:
+        id:
+          type: integer
+        auctionId:
+          type: integer
+        bidderId:
+          type: integer
+        bidderName:
+          type: ["string", "null"]
+        amount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    BidInput:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+
+    # ─── WATCHLIST SCHEMAS ────────────────────────────────────────────────────
+    WatchlistItem:
+      type: object
+      required: [id, userId, auctionId, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        auctionId:
+          type: integer
+        auction:
+          $ref: "#/components/schemas/Auction"
+        createdAt:
+          type: string
+          format: date-time
+
+    # ─── PAYMENT SCHEMAS ──────────────────────────────────────────────────────
+    Payment:
+      type: object
+      required: [id, auctionId, buyerId, amount, status, createdAt]
+      properties:
+        id:
+          type: integer
+        auctionId:
+          type: integer
+        buyerId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        stripePaymentIntentId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentIntentInput:
+      type: object
+      required: [auctionId]
+      properties:
+        auctionId:
+          type: integer
+
+    PaymentIntent:
+      type: object
+      required: [clientSecret, paymentId, amount]
+      properties:
+        clientSecret:
+          type: string
+        paymentId:
+          type: integer
+        amount:
+          type: number
+
+    PaymentListResponse:
+      type: object
+      required: [payments, total, page, limit]
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ─── NOTIFICATION SCHEMAS ─────────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, userId, type, title, message, read, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [outbid, auction_won, auction_ending, auction_started, payment_success, payment_failed, listing_approved, listing_rejected, system]
+        title:
+          type: string
+        message:
+          type: string
+        auctionId:
+          type: ["integer", "null"]
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    # ─── ANALYTICS SCHEMAS ────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [totalUsers, totalCars, totalAuctions, liveAuctions, totalRevenue, totalBids, pendingListings, recentAuctions]
+      properties:
+        totalUsers:
+          type: integer
+        totalCars:
+          type: integer
+        totalAuctions:
+          type: integer
+        liveAuctions:
+          type: integer
+        totalRevenue:
+          type: number
+        totalBids:
+          type: integer
+        pendingListings:
+          type: integer
+        recentAuctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Auction"
+
+    AuctionAnalytics:
+      type: object
+      required: [statusBreakdown, bidsOverTime, topAuctions]
+      properties:
+        statusBreakdown:
+          type: object
+          properties:
+            upcoming:
+              type: integer
+            live:
+              type: integer
+            ended:
+              type: integer
+          required: [upcoming, live, ended]
+        bidsOverTime:
+          type: array
+          items:
+            type: object
+            required: [date, count]
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+        topAuctions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Auction"
+
+    RevenueAnalytics:
+      type: object
+      required: [totalRevenue, revenueOverTime, paymentStatusBreakdown]
+      properties:
+        totalRevenue:
+          type: number
+        revenueOverTime:
+          type: array
+          items:
+            type: object
+            required: [date, amount]
+            properties:
+              date:
+                type: string
+              amount:
+                type: number
+        paymentStatusBreakdown:
+          type: object
+          properties:
+            pending:
+              type: integer
+            completed:
+              type: integer
+            failed:
+              type: integer
+            refunded:
+              type: integer
+          required: [pending, completed, failed, refunded]

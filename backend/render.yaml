@@ -1,0 +1,32 @@
+# Render Blueprint: Web Service + PostgreSQL. Deploy via Dashboard > New > Blueprint.
+databases:
+  - name: biddrive-db
+    plan: free
+    databaseName: biddrive
+services:
+  - type: web
+    name: biddrive-api
+    runtime: node
+    plan: free
+    buildCommand: npm i -g pnpm@10 && pnpm install --no-frozen-lockfile --prod=false && pnpm --filter @workspace/db push && pnpm --filter @workspace/api-server build
+    startCommand: pnpm --filter @workspace/api-server start
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: biddrive-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENABLE_DEMO
+        value: "true"
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: ADMIN_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
