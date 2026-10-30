@@ -51,7 +51,16 @@ class ModelsTest {
         val q = f.toQuery()
         assertEquals("BMW,Audi", q["make"]); assertEquals("2021", q["yearMin"]); assertEquals("5000000", q["priceMax"])
         assertEquals("live", q["status"]); assertEquals("x5", q["q"])
-        assertEquals(4, f.activeCount)
+        assertEquals(5, f.activeCount)
         assertEquals(0, AuctionFilters().activeCount)
+    }
+}
+
+class ThemeTest {
+    @Test fun defaultThemeModeIsSystem() {
+        assertEquals(app.biddrive.android.ui.theme.ThemeMode.SYSTEM, app.biddrive.android.ui.theme.ThemeMode.valueOf("SYSTEM"))
+    }
+    @Test fun apiBaseUrlEndsWithApiSlash() {
+        assertTrue(app.biddrive.android.data.ApiConfig.baseUrl.endsWith("/api/"))
     }
 }

@@ -166,10 +166,25 @@ private fun AppNavGraph(nav: NavHostController, start: String, padding: PaddingV
                 onSignIn = { onWelcomeSeen(); nav.navigate(Route.SignIn) },
             )
         }
-        composable(Route.SignIn) { SignInScreen(onSignUp = { nav.navigate(Route.SignUp) }) }
+        composable(Route.SignIn) {
+            SignInScreen(
+                onSignUp = { nav.navigate(Route.SignUp) },
+                onBackToWelcome = {
+                    nav.navigate(Route.Welcome) {
+                        popUpTo(Route.SignIn) { inclusive = true }
+                    }
+                },
+            )
+        }
         composable(Route.SignUp) {
-            // Replace Sign Up with Sign In so "Sign in" never lands back on the Welcome page.
-            SignUpScreen(onBackToSignIn = { nav.navigate(Route.SignIn) { popUpTo(Route.SignUp) { inclusive = true } } })
+            SignUpScreen(
+                onBackToSignIn = { nav.navigate(Route.SignIn) { popUpTo(Route.SignUp) { inclusive = true } } },
+                onBackToWelcome = {
+                    nav.navigate(Route.Welcome) {
+                        popUpTo(Route.SignUp) { inclusive = true }
+                    }
+                },
+            )
         }
         composable(Route.Home) {
             HomeScreen(onOpenAuction = openDetails, onOpenSearch = { nav.navigate(Route.Search) }, onSeeAll = { nav.navigate(Route.Explore) })

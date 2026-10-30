@@ -1,5 +1,6 @@
 package app.biddrive.android.ui.auth
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -107,7 +108,8 @@ private fun Brand(title: String, subtitle: String) {
 }
 
 @Composable
-fun SignInScreen(onSignUp: () -> Unit) {
+fun SignInScreen(onSignUp: () -> Unit, onBackToWelcome: () -> Unit = {}) {
+    BackHandler(onBack = onBackToWelcome)
     val vm = appViewModel { c, _ -> AuthViewModel(c.auth, c.session) }
     val ui by vm.ui.collectAsState()
     val expired by vm.sessionExpired.collectAsState()
@@ -146,7 +148,8 @@ fun SignInScreen(onSignUp: () -> Unit) {
 }
 
 @Composable
-fun SignUpScreen(onBackToSignIn: () -> Unit) {
+fun SignUpScreen(onBackToSignIn: () -> Unit, onBackToWelcome: () -> Unit = {}) {
+    BackHandler(onBack = onBackToWelcome)
     val vm = appViewModel { c, _ -> AuthViewModel(c.auth, c.session) }
     val ui by vm.ui.collectAsState()
     var name by remember { mutableStateOf("") }

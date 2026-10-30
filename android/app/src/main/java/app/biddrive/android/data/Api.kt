@@ -53,7 +53,11 @@ val AppJson = Json {
 }
 
 object ApiConfig {
-    val baseUrl: String = BuildConfig.API_BASE_URL
+    val baseUrl: String = run {
+        val trimmed = BuildConfig.API_BASE_URL.trim().trimEnd('/')
+        val withApi = if (trimmed.endsWith("/api")) trimmed else "$trimmed/api"
+        "$withApi/"
+    }
     /** True while the release placeholder URL has not been replaced. */
     val isConfigured: Boolean = !baseUrl.contains("CONFIGURE-ME")
 
